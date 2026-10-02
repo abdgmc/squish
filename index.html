@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Squish</title>
+<title>Squish - tiny toys to calm down</title>
+<meta name="description" content="Pop bubbles, stretch jelly, rake sand, breathe and spin. Tiny toys to melt stress away.">
+<meta property="og:type" content="website"><meta property="og:title" content="Squish - tiny toys to calm down">
+<meta property="og:description" content="Pop bubbles, stretch jelly, rake sand, breathe and spin. Free, no sign-up.">
+<meta property="og:url" content="https://abdgmc.github.io/squish/"><meta property="og:image" content="https://abdgmc.github.io/squish/preview.png">
+<meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1d2340">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%232b1055'/%3E%3Cpath d='M18 68a32 32 0 0 1 64 0z' fill='%23ffb254'/%3E%3Crect x='18' y='56' width='64' height='4' fill='%232b1055'/%3E%3Crect x='18' y='63' width='64' height='5' fill='%232b1055'/%3E%3Crect x='12' y='72' width='76' height='6' rx='3' fill='%23ff5ea0'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#1d2340;--ink:#f3efff;--mute:#a9aed6;--panel:#262d52;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -42,6 +48,8 @@ h1{font-size:2.6rem;letter-spacing:-.01em;margin:10px 0 4px}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.ic2,.ic4{animation:none}.card:hover{transform:none}}
 @media (max-width:380px){.cards{grid-template-columns:1fr}}
+.ic5{border-radius:18px;background:repeating-linear-gradient(100deg,rgba(255,255,255,.55) 0 6px,rgba(120,80,30,.25) 6px 12px)}
+.ic6{border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,rgba(255,255,255,.2) 60%);box-shadow:inset 0 0 0 3px rgba(255,255,255,.6),22px 14px 0 -14px rgba(255,255,255,.6)}
 .credit{margin-top:auto;padding-top:26px;color:var(--mute);font-size:.95rem;letter-spacing:.02em}
 .board{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;background:var(--panel);padding:16px;border-radius:28px}
 .pop{aspect-ratio:1;border-radius:50%;border:0;cursor:pointer;background:var(--c);
@@ -67,6 +75,8 @@ canvas{width:100%;aspect-ratio:1;background:var(--panel);border-radius:28px;touc
   <button class="card" data-go="1" style="--a:#ff7eb6;--b:#ffa94d"><i class="ic ic1"></i><b>Pop board</b><span>Press every bubble. Flip it and go again.</span></button>
   <button class="card" data-go="2" style="--a:#4aa8ff;--b:#7ee0ff"><i class="ic ic2"></i><b>Jelly</b><span>Grab it, stretch it, watch it wobble.</span></button>
   <button class="card" data-go="3" style="--a:#69db7c;--b:#4dd0e1"><i class="ic ic3"></i><b>Breathe</b><span>A slow orb to match your breathing to.</span></button>
+  <button class="card" data-go="5" style="--a:#e8c27a;--b:#ffd86b"><i class="ic ic5"></i><b>Sand</b><span>Drag a finger through a calm sand garden.</span></button>
+  <button class="card" data-go="6" style="--a:#7ee0ff;--b:#b9a6ff"><i class="ic ic6"></i><b>Bubbles</b><span>Floating bubbles to pop, as many as you like.</span></button>
   <button class="card" data-go="4" style="--a:#9d8cff;--b:#ff7eb6"><i class="ic ic4"></i><b>Spin</b><span>Flick a fidget spinner and let it run down.</span></button>
  </div>
 </section>
@@ -91,6 +101,16 @@ canvas{width:100%;aspect-ratio:1;background:var(--panel);border-radius:28px;touc
  <div class="row"><span id="spd">Flick it around.</span><button class="reset" id="spcol">New color</button></div>
 </section>
 
+<section id="s5" hidden>
+ <canvas id="sd" width="800" height="800"></canvas>
+ <div class="row"><span>Drag to draw lines in the sand.</span><button class="reset" id="smooth">Smooth it</button></div>
+</section>
+
+<section id="s6" hidden>
+ <canvas id="bb" width="800" height="800"></canvas>
+ <div class="row"><span id="bcount">0 popped</span><span>Tap a bubble.</span></div>
+</section>
+
 <footer class="credit">made by abdgmc</footer>
 
 <script>
@@ -105,12 +125,16 @@ function tone(f,d,type,vol,slide){if(window.__off)return;try{
  g.gain.setValueAtTime(vol||.15,t);g.gain.exponentialRampToValueAtTime(.001,t+d);
  o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+d);}catch(e){}}
 
+function noise(d,vol,f){if(window.__off)return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+ var n=Math.floor(ac.sampleRate*d),b=ac.createBuffer(1,n,ac.sampleRate),a=b.getChannelData(0);for(var i=0;i<n;i++)a[i]=Math.random()*2-1;
+ var s=ac.createBufferSource(),fl=ac.createBiquadFilter(),g=ac.createGain();s.buffer=b;fl.type='bandpass';fl.frequency.value=f;
+ g.gain.setValueAtTime(vol,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);s.connect(fl);fl.connect(g);g.connect(ac.destination);s.start();}catch(e){}}
 // ---------- tabs ----------
-var subs=['Pick something to play with. Nothing here counts for anything.','Press the bubbles. Press them again.','Pull it and let go.','Follow the orb.','Flick it.'];
-function show(n){for(var i=0;i<=4;i++)document.getElementById('s'+i).hidden=i!=n;
+var subs=['Pick something to play with. Nothing here counts for anything.','Press the bubbles. Press them again.','Pull it and let go.','Follow the orb.','Flick it.','Slow lines, slow breath.','Pop them one by one.'];
+function show(n){for(var i=0;i<=6;i++)document.getElementById('s'+i).hidden=i!=n;
  document.getElementById('ctl').hidden=n==0;document.getElementById('sub').textContent=subs[n];
  if(n!=3)stopBreathe();window.scrollTo(0,0);
- if(n>0){var nm=['','pop-board','jelly','breathe','spin'][n];
+ if(n>0){var nm=['','pop-board','jelly','breathe','spin','sand','bubbles'][n];
   try{if(window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:'toy-'+nm,title:'Opened '+nm,event:true});}catch(e){}}}
 Array.prototype.forEach.call(document.querySelectorAll('[data-go]'),function(b){b.onclick=function(){show(+b.getAttribute('data-go'));tone(520,.1,'triangle',.1,760);};});
 document.getElementById('back').onclick=function(){show(0);};
@@ -233,6 +257,47 @@ function sdraw(){
  requestAnimationFrame(sdraw);
 }
 sdraw();
+
+// ---------- sand ----------
+var dc=document.getElementById('sd'),dx=dc.getContext('2d'),sdown=false,lx=0,ly=0,lsn=0;
+function sandInit(){dx.fillStyle='#e8d3a1';dx.fillRect(0,0,W,W);
+ for(var i=0;i<16000;i++){dx.fillStyle=Math.random()<.5?'rgba(150,115,60,.18)':'rgba(255,245,215,.28)';dx.fillRect(Math.random()*W,Math.random()*W,2,2);}}
+sandInit();
+function sxy(e){var r=dc.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*W};}
+function ln(a,b,c,d,w,col){dx.lineCap='round';dx.beginPath();dx.moveTo(a,b);dx.lineTo(c,d);dx.lineWidth=w;dx.strokeStyle=col;dx.stroke();}
+dc.addEventListener('pointerdown',function(e){dc.setPointerCapture(e.pointerId);sdown=true;var p=sxy(e);lx=p.x;ly=p.y;});
+dc.addEventListener('pointermove',function(e){if(!sdown)return;var p=sxy(e);
+ ln(lx,ly,p.x,p.y,34,'rgba(255,245,215,.35)');ln(lx,ly,p.x,p.y,22,'rgba(120,88,40,.4)');ln(lx,ly,p.x,p.y,10,'rgba(90,62,28,.35)');
+ var sp=Math.hypot(p.x-lx,p.y-ly),t=performance.now();
+ if(t-lsn>60&&sp>2){lsn=t;noise(.12,Math.min(.12,.02+sp*.004),1800+Math.random()*900);}
+ lx=p.x;ly=p.y;});
+function sup2(){sdown=false;}dc.addEventListener('pointerup',sup2);dc.addEventListener('pointercancel',sup2);
+document.getElementById('smooth').onclick=function(){sandInit();noise(.5,.1,1200);};
+
+// ---------- bubbles ----------
+var bc=document.getElementById('bb'),bx=bc.getContext('2d'),bs=[],rings=[],bn=0,bt0=0;
+function addB(y){bs.push({x:70+Math.random()*(W-140),y:y,r:30+Math.random()*50,vy:.6+Math.random()*1.1,ph:Math.random()*6,h:Math.floor(Math.random()*360)});}
+for(var q=0;q<9;q++)addB(Math.random()*W);
+bc.style.touchAction='manipulation';bc.style.cursor='pointer';
+bc.addEventListener('pointerdown',function(e){var r=bc.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W,y=(e.clientY-r.top)/r.height*W;
+ for(var i=bs.length-1;i>=0;i--){var b=bs[i];if(Math.hypot(b.x-x,b.y-y)<b.r){bs.splice(i,1);rings.push({x:b.x,y:b.y,r:b.r,h:b.h,l:1});
+  bn++;document.getElementById('bcount').textContent=bn+' popped';
+  if(pk==2)tone(1500,.03,'square',.06);else if(pk==1)tone(500-b.r*3,.18,'sine',.2,900);else{tone(700-b.r*4,.08,'triangle',.18,200);noise(.06,.1,2500);}
+  if(navigator.vibrate)navigator.vibrate(8);break;}}});
+function bdraw(){
+ if(document.getElementById('s6').hidden){requestAnimationFrame(bdraw);return;}
+ bt0+=.02;if(bs.length<14&&Math.random()<.03)addB(W+70);
+ bx.clearRect(0,0,W,W);
+ for(var i=bs.length-1;i>=0;i--){var b=bs[i];b.y-=reduce?b.vy*.4:b.vy;b.x+=Math.sin(bt0+b.ph)*.6;if(b.y<-b.r-10){bs.splice(i,1);continue;}
+  var g=bx.createRadialGradient(b.x-b.r*.3,b.y-b.r*.35,b.r*.1,b.x,b.y,b.r);
+  g.addColorStop(0,'hsla('+b.h+',90%,85%,.15)');g.addColorStop(.75,'hsla('+b.h+',90%,70%,.18)');g.addColorStop(1,'hsla('+b.h+',95%,75%,.7)');
+  bx.beginPath();bx.arc(b.x,b.y,b.r,0,7);bx.fillStyle=g;bx.fill();bx.lineWidth=2;bx.strokeStyle='hsla('+b.h+',90%,85%,.8)';bx.stroke();
+  bx.beginPath();bx.ellipse(b.x-b.r*.35,b.y-b.r*.4,b.r*.22,b.r*.12,-.6,0,7);bx.fillStyle='rgba(255,255,255,.75)';bx.fill();}
+ for(var j=rings.length-1;j>=0;j--){var o=rings[j];o.r+=3;o.l-=.05;if(o.l<=0){rings.splice(j,1);continue;}
+  bx.beginPath();bx.arc(o.x,o.y,o.r,0,7);bx.lineWidth=4;bx.strokeStyle='hsla('+o.h+',90%,80%,'+o.l+')';bx.stroke();}
+ requestAnimationFrame(bdraw);
+}
+bdraw();
 })();
 </script>
 <script data-goatcounter="https://abdgmc.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
