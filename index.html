@@ -109,7 +109,9 @@ function tone(f,d,type,vol,slide){if(window.__off)return;try{
 var subs=['Pick something to play with. Nothing here counts for anything.','Press the bubbles. Press them again.','Pull it and let go.','Follow the orb.','Flick it.'];
 function show(n){for(var i=0;i<=4;i++)document.getElementById('s'+i).hidden=i!=n;
  document.getElementById('ctl').hidden=n==0;document.getElementById('sub').textContent=subs[n];
- if(n!=3)stopBreathe();window.scrollTo(0,0);}
+ if(n!=3)stopBreathe();window.scrollTo(0,0);
+ if(n>0){var nm=['','pop-board','jelly','breathe','spin'][n];
+  try{if(window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:'toy-'+nm,title:'Opened '+nm,event:true});}catch(e){}}}
 Array.prototype.forEach.call(document.querySelectorAll('[data-go]'),function(b){b.onclick=function(){show(+b.getAttribute('data-go'));tone(520,.1,'triangle',.1,760);};});
 document.getElementById('back').onclick=function(){show(0);};
 if(location.protocol==='file:')document.getElementById('share').hidden=true;
@@ -233,4 +235,5 @@ function sdraw(){
 sdraw();
 })();
 </script>
+<script data-goatcounter="https://abdgmc.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body></html>
